@@ -116,6 +116,7 @@ public class SafeChildrenAPI {
         String resultFromDb = null;
         SafeChildrenResponse res = new SafeChildrenResponse();
         try{
+            IP_UrlDetail(url, ip, cn);
             resultFromDb = getUrlDetail(url, cn);
             if(resultFromDb != null || !"".equals(resultFromDb))
                 response = resultFromDb;
@@ -127,6 +128,40 @@ public class SafeChildrenAPI {
         }
         return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
     }
+    
+//    @POST
+//    @Path("/IP_UrlDetail")
+//    @Produces({"application/json"})
+//    public Response IP_UrlDetail(InputStream data) throws Exception {
+//        Response validation = validation();
+//           if(validation.getStatus() !=200 ){
+//               return validation;
+//           }
+//           String body = getBody(request);
+//           JSONObject jsonReq = new Gson().fromJson(body, JsonObject.class);
+//           Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
+//    }
+    
+    private String IP_UrlDetail(String url, String ip, Connection cn) throws Exception {
+        String sql = "insert into URL_SEARCH_HISTORY ( IP       ,\n"  +
+                "   URL          ,\n" +
+                "   TIME         ,\n" +
+                "   CYBER_RES      )" +
+                "   valuse "          +  "(?,?,sysdate,?)";
+        PreparedStatement stmt = null;
+        Timestamp timestamp = Timestamp.now();
+        try{
+            stmt = cn.prepareStatement(sql);
+            int i = 1;
+            stmt.setString(i++, ip);
+            stmt.setString(i++, url);
+            stmt.setTime(i++, timestamp);
+            stmt.setString(i++, req.toString());
+            stmt.execute();
+        }finally{
+            Database.closeObject(stmt);
+        }   
+    } 
 
     public void saveRequest(Connection cn, JsonObject req) throws Exception {
         String sql = "insert into HOST_MALICIOUS (   UUID               ,\n" +
