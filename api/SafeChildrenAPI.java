@@ -84,14 +84,14 @@ public class SafeChildrenAPI {
     @Produces({" application/json "})
     public Response getDataChart (InputStream data) throws Exception{
         String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist\"\n}";
-        String body = getBody(request);
-        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
+        String url = request.getParameter("url");
+        String ip = request.getParameter("ip");
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         //ChildChartData res = new ChildChartData();
         SafeChildrenResponse res = new SafeChildrenResponse();
         try{
-            resultFromDb = getUrlDetail(jsonReq.get("url").toString(), cn);
+            resultFromDb = getUrlDetail(url, cn);
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
             if(item != null || !"".equals(item))
@@ -102,7 +102,7 @@ public class SafeChildrenAPI {
             res.setCode("-1");
             res.setDesc("Exeption: " + ex.getMessage()); 
         }   
-        return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @GET
