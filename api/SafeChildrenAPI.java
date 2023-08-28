@@ -24,6 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.vmt.model.ChildChartData;
+import org.json.JSONObject;
 
 @Path("/")
 public class SafeChildrenAPI {
@@ -75,6 +77,33 @@ public class SafeChildrenAPI {
         }
         return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
     }
+    
+     // api get data chart
+    @GET
+    @Path("/dataChart")
+    @Produces({" application/json "})
+    public Response getDataChart (InputStream data) throws Exception{
+        String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist\"\n}";
+        String body = getBody(request);
+        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
+        Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
+        String resultFromDb = null;
+        //ChildChartData res = new ChildChartData();
+        SafeChildrenResponse res = new SafeChildrenResponse();
+        try{
+            resultFromDb = getUrlDetail(jsonReq.get("url").toString(), cn);
+            ChildChartData result = new ChildChartData(resultFromDb);
+            JSONObject item = result.getData_parent();
+            if(item != null || !"".equals(item))
+                response = item.toString();
+            res.setCode("200");
+            res.setDesc(response);
+        }catch(Exception ex){
+            res.setCode("-1");
+            res.setDesc("Exeption: " + ex.getMessage()); 
+        }   
+        return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
+    }
 
     @GET
     @Path("/urldetail")
@@ -94,12 +123,10 @@ public class SafeChildrenAPI {
             res.setDesc(response);
         }catch(Exception e){
             res.setCode("-1");
-            res.setDesc("Exeption: " + e.getMessage());
+            res.setDesc("Exeption: " + e.getMessage()); 
         }
         return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
     }
-
-    // api get data chart
 
     public void saveRequest(Connection cn, JsonObject req) throws Exception {
         String sql = "insert into HOST_MALICIOUS (   UUID               ,\n" +
@@ -167,7 +194,7 @@ public class SafeChildrenAPI {
             }
             rs.close();
             stmt.close();
-            return (urldetail.get("host") == null)? url : urldetail.toString();
+            return (urldetail.get("host") == null) ? url : urldetail.toString();
         } finally {
             Database.closeObject(stmt);
         }
@@ -182,6 +209,7 @@ public class SafeChildrenAPI {
         try {
             InputStream inputStream = request.getInputStream();
             if (inputStream != null) {
+                
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                 char[] charBuffer = new char[128];
                 int bytesRead = -1;
