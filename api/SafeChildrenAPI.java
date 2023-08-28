@@ -91,6 +91,7 @@ public class SafeChildrenAPI {
         //ChildChartData res = new ChildChartData();
         SafeChildrenResponse res = new SafeChildrenResponse();
         try{
+            IP_UrlDetail(url, ip, cn);
             resultFromDb = getUrlDetail(url, cn);
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
@@ -129,18 +130,6 @@ public class SafeChildrenAPI {
         return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
     }
     
-//    @POST
-//    @Path("/IP_UrlDetail")
-//    @Produces({"application/json"})
-//    public Response IP_UrlDetail(InputStream data) throws Exception {
-//        Response validation = validation();
-//           if(validation.getStatus() !=200 ){
-//               return validation;
-//           }
-//           String body = getBody(request);
-//           JSONObject jsonReq = new Gson().fromJson(body, JsonObject.class);
-//           Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
-//    }
     
     private String IP_UrlDetail(String url, String ip, Connection cn) throws Exception {
         String sql = "insert into URL_SEARCH_HISTORY ( IP       ,\n"  +
