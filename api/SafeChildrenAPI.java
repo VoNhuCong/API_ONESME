@@ -25,6 +25,9 @@ import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.vmt.model.ChildChartData;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import org.json.JSONObject;
 
 @Path("/")
@@ -89,9 +92,11 @@ public class SafeChildrenAPI {
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         //ChildChartData res = new ChildChartData();
+        String body = getBody(request);
+        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
         SafeChildrenResponse res = new SafeChildrenResponse();
         try{
-            IP_UrlDetail(url, ip, cn);
+            IP_UrlDetail(url, ip, cn, jsonReq);
             resultFromDb = getUrlDetail(url, cn);
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
@@ -116,8 +121,10 @@ public class SafeChildrenAPI {
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         SafeChildrenResponse res = new SafeChildrenResponse();
+        String body = getBody(request);
+        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
         try{
-            IP_UrlDetail(url, ip, cn);
+            IP_UrlDetail(url, ip, cn, jsonReq);
             resultFromDb = getUrlDetail(url, cn);
             if(resultFromDb != null || !"".equals(resultFromDb))
                 response = resultFromDb;
@@ -131,25 +138,27 @@ public class SafeChildrenAPI {
     }
     
     
-    private String IP_UrlDetail(String url, String ip, Connection cn) throws Exception {
+    private String IP_UrlDetail(String url, String ip, Connection cn, JsonObject req) throws Exception {
         String sql = "insert into URL_SEARCH_HISTORY ( IP       ,\n"  +
                 "   URL          ,\n" +
                 "   TIME         ,\n" +
                 "   CYBER_RES      )" +
                 "   valuse "          +  "(?,?,sysdate,?)";
         PreparedStatement stmt = null;
-        Timestamp timestamp = Timestamp.now();
+        Timestamp timestamp = Timestamp.from(Instant.now());
+        //Timestamp time = Timestamp.valueOf(LocalDateTime.now());
         try{
             stmt = cn.prepareStatement(sql);
             int i = 1;
             stmt.setString(i++, ip);
             stmt.setString(i++, url);
-            stmt.setTime(i++, timestamp);
+            stmt.setTimestamp(i++, timestamp);
             stmt.setString(i++, req.toString());
-            stmt.execute();
+            stmt.executeUpdate();
         }finally{
             Database.closeObject(stmt);
         }   
+        return null;
     } 
 
     public void saveRequest(Connection cn, JsonObject req) throws Exception {
