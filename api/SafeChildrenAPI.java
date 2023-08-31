@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.vmt.model.ChildChartData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -86,20 +87,18 @@ public class SafeChildrenAPI {
     @Path("/dataChart")
     @Produces({" application/json "})
     public Response getDataChart (InputStream data) throws Exception{
-        String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist\"\n}";
+        String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist 1\"\n}";
         String url = request.getParameter("url");
         String ip = request.getParameter("ip");
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
-        //ChildChartData res = new ChildChartData();
-        String body = getBody(request);
-        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
         SafeChildrenResponse res = new SafeChildrenResponse();
         try{
-            IP_UrlDetail(url, ip, cn, jsonReq);
             resultFromDb = getUrlDetail(url, cn);
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
+            // insert to db
+            IP_UrlDetail(ip, url, cn, item);
             if(item != null || !"".equals(item))
                 response = item.toString();
             res.setCode("200");
@@ -124,7 +123,6 @@ public class SafeChildrenAPI {
         String body = getBody(request);
         JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
         try{
-            IP_UrlDetail(url, ip, cn, jsonReq);
             resultFromDb = getUrlDetail(url, cn);
             if(resultFromDb != null || !"".equals(resultFromDb))
                 response = resultFromDb;
@@ -133,33 +131,34 @@ public class SafeChildrenAPI {
         }catch(Exception e){
             res.setCode("-1");
             res.setDesc("Exeption: " + e.getMessage());
+            response = "{\n\t\"code\": \"200\"\n\t\"status\": \""+e.getMessage()+"\"\n}";
         }
-        return Response.status(Response.Status.OK).entity(this.gson.toJson(res)).build();
+        return Response.status(Response.Status.OK).entity(response).build();
     }
     
-    
-    private String IP_UrlDetail(String url, String ip, Connection cn, JsonObject req) throws Exception {
-        String sql = "insert into URL_SEARCH_HISTORY ( IP       ,\n"  +
-                "   URL          ,\n" +
+
+    public void IP_UrlDetail(String ip, String url, Connection cn, JSONObject jsonReq){
+        String sql = "insert into NCPT_APP.URL_SEARCH_HISTORY(IP               ,\n" +
+                "   URL         ,\n" +
                 "   TIME         ,\n" +
                 "   CYBER_RES      )" +
-                "   valuse "          +  "(?,?,sysdate,?)";
+                "   values "          +  "(?,?,?,?)";
         PreparedStatement stmt = null;
         Timestamp timestamp = Timestamp.from(Instant.now());
         //Timestamp time = Timestamp.valueOf(LocalDateTime.now());
         try{
             stmt = cn.prepareStatement(sql);
-            int i = 1;
-            stmt.setString(i++, ip);
-            stmt.setString(i++, url);
-            stmt.setTimestamp(i++, timestamp);
-            stmt.setString(i++, req.toString());
-            stmt.executeUpdate();
-        }finally{
-            Database.closeObject(stmt);
-        }   
-        return null;
-    } 
+            stmt.setString(1, ip);
+            stmt.setString(2, url);
+            stmt.setTimestamp(3, timestamp);
+            stmt.setString(4, jsonReq.toString());
+            stmt.execute();
+            System.out.println("oke");
+        }catch (SQLException  e) {
+            System.out.println("SQL DOES NOT WORKL: " + e.getMessage());
+        }
+
+    }
 
     public void saveRequest(Connection cn, JsonObject req) throws Exception {
         String sql = "insert into HOST_MALICIOUS (   UUID               ,\n" +
