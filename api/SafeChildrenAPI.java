@@ -98,9 +98,11 @@ public class SafeChildrenAPI {
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
             // insert to db
-            IP_UrlDetail(ip, url, cn, item);
-            if(item != null || !"".equals(item))
+            
+            if(item != null || !"".equals(item)){
+                IP_UrlDetail(ip, url, cn, resultFromDb);
                 response = item.toString();
+            }
             res.setCode("200");
             res.setDesc(response);
         }catch(Exception ex){
@@ -120,8 +122,6 @@ public class SafeChildrenAPI {
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         SafeChildrenResponse res = new SafeChildrenResponse();
-        String body = getBody(request);
-        JsonObject jsonReq = new Gson().fromJson(body, JsonObject.class);
         try{
             resultFromDb = getUrlDetail(url, cn);
             if(resultFromDb != null || !"".equals(resultFromDb))
@@ -137,21 +137,23 @@ public class SafeChildrenAPI {
     }
     
 
-    public void IP_UrlDetail(String ip, String url, Connection cn, JSONObject jsonReq){
+    public void IP_UrlDetail(String ip, String url, Connection cn, String resultFromDb){
         String sql = "insert into NCPT_APP.URL_SEARCH_HISTORY(IP               ,\n" +
-                "   URL         ,\n" +
+                "   URL          ,\n" +
                 "   TIME         ,\n" +
                 "   CYBER_RES      )" +
                 "   values "          +  "(?,?,?,?)";
         PreparedStatement stmt = null;
         Timestamp timestamp = Timestamp.from(Instant.now());
         //Timestamp time = Timestamp.valueOf(LocalDateTime.now());
+        //JSONObject item = result.getData_parent();
+        //String cyber_res = item.toString();
         try{
             stmt = cn.prepareStatement(sql);
             stmt.setString(1, ip);
             stmt.setString(2, url);
             stmt.setTimestamp(3, timestamp);
-            stmt.setString(4, jsonReq.toString());
+            stmt.setString(4, resultFromDb);
             stmt.execute();
             System.out.println("oke");
         }catch (SQLException  e) {
