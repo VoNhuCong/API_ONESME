@@ -93,18 +93,19 @@ public class SafeChildrenAPI {
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         SafeChildrenResponse res = new SafeChildrenResponse();
+        IP_UrlDetail(ip, url, cn, response);
         try{
             resultFromDb = getUrlDetail(url, cn);
             ChildChartData result = new ChildChartData(resultFromDb);
             JSONObject item = result.getData_parent();
-            // insert to db
-            
+            // insert to db       
             if(item != null || !"".equals(item)){
                 IP_UrlDetail(ip, url, cn, resultFromDb);
-                response = item.toString();
+                response = item.toString();            
             }
             res.setCode("200");
             res.setDesc(response);
+            
         }catch(Exception ex){
             res.setCode("-1");
             res.setDesc("Exeption: " + ex.getMessage()); 
@@ -133,7 +134,7 @@ public class SafeChildrenAPI {
             res.setDesc("Exeption: " + e.getMessage());
             response = "{\n\t\"code\": \"200\"\n\t\"status\": \""+e.getMessage()+"\"\n}";
         }
-        return Response.status(Response.Status.OK).entity(response).build();
+        return Response.status(Response.Status.OK).entity(response).build();     
     }
     
 
@@ -146,8 +147,6 @@ public class SafeChildrenAPI {
         PreparedStatement stmt = null;
         Timestamp timestamp = Timestamp.from(Instant.now());
         //Timestamp time = Timestamp.valueOf(LocalDateTime.now());
-        //JSONObject item = result.getData_parent();
-        //String cyber_res = item.toString();
         try{
             stmt = cn.prepareStatement(sql);
             stmt.setString(1, ip);
