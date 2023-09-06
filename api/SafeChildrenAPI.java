@@ -92,16 +92,18 @@ public class SafeChildrenAPI {
         String ip = request.getParameter("ip");
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
-        SafeChildrenResponse res = new SafeChildrenResponse();
-        IP_UrlDetail(ip, url, cn, response);
+        SafeChildrenResponse res = new SafeChildrenResponse(); 
         try{
-            resultFromDb = getUrlDetail(url, cn);
-            ChildChartData result = new ChildChartData(resultFromDb);
-            JSONObject item = result.getData_parent();
+            resultFromDb = getUrlDetail(url, cn);          
             // insert to db       
-            if(item != null || !"".equals(item)){
+            if(resultFromDb !=""){
+                ChildChartData result = new ChildChartData(resultFromDb);
+                JSONObject item = result.getData_parent();
                 IP_UrlDetail(ip, url, cn, resultFromDb);
                 response = item.toString();            
+            }else 
+            {
+                IP_UrlDetail(ip, url, cn, response);
             }
             res.setCode("200");
             res.setDesc(response);
@@ -145,13 +147,13 @@ public class SafeChildrenAPI {
                 "   CYBER_RES      )" +
                 "   values "          +  "(?,?,?,?)";
         PreparedStatement stmt = null;
-        Timestamp timestamp = Timestamp.from(Instant.now());
-        //Timestamp time = Timestamp.valueOf(LocalDateTime.now());
+        //Timestamp timestamp = Timestamp.from(Instant.now());
+        Timestamp time = Timestamp.valueOf(LocalDateTime.now());
         try{
             stmt = cn.prepareStatement(sql);
             stmt.setString(1, ip);
             stmt.setString(2, url);
-            stmt.setTimestamp(3, timestamp);
+            stmt.setTimestamp(3, time);
             stmt.setString(4, resultFromDb);
             stmt.execute();
             System.out.println("oke");
@@ -227,7 +229,7 @@ public class SafeChildrenAPI {
             }
             rs.close();
             stmt.close();
-            return (urldetail.get("host") == null) ? url : urldetail.toString();
+            return (urldetail.get("host") == null) ? "" : urldetail.toString();
         } finally {
             Database.closeObject(stmt);
         }
