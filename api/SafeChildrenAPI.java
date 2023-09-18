@@ -87,9 +87,11 @@ public class SafeChildrenAPI {
     @Path("/dataChart")
     @Produces({" application/json "})
     public Response getDataChart (InputStream data) throws Exception{
-        String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist 1\"\n}";
+        String response = "{\n\t\"code\":\"200\"\n\t\"status\":\"url doesn't exist 11232\"\n}";
         String url = request.getParameter("url");
         String ip = request.getParameter("ip");
+        //String ip = "192.168.25.215";
+        //String url = "escort-lure.eu";
         Connection cn = DataSourceManager.getInstance().getDataSource().getConnection();
         String resultFromDb = null;
         SafeChildrenResponse res = new SafeChildrenResponse(); 
@@ -112,7 +114,11 @@ public class SafeChildrenAPI {
             res.setCode("-1");
             res.setDesc("Exeption: " + ex.getMessage()); 
         }   
-        return Response.status(Response.Status.OK).entity(response).build();
+        return Response.status(Response.Status.OK)
+                .entity(response)
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Credentials", "false")
+                .build();
     }
 
     @GET
